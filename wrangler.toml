@@ -18,5 +18,5 @@ not_found_handling = "404-page"
 
 [[d1_databases]]
 binding = "DB"                      # nama ini HARUS "DB" -- dipakai persis di worker.js (env.DB)
-database_name = "survei-ekskul-db"  # ganti sesuai nama database D1 yang Anda buat
-database_id = "GANTI-DENGAN-DATABASE-ID-ANDA"
+database_name = "siekstrasapa2"  # ganti sesuai nama database D1 yang Anda buat
+database_id = "bce249ca-1ab3-459f-b0f7-a2c5817df930"
