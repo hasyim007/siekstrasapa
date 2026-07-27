@@ -1,0 +1,22 @@
+# ============================================================
+# wrangler.toml - konfigurasi Worker
+# ============================================================
+# ⚠️ JANGAN LANGSUNG DI-UPLOAD! Baris "name" di bawah ini WAJIB diisi dulu
+# sesuai nama Worker yang Anda buat di dashboard Cloudflare (lihat
+# PANDUAN-DEPLOY-CLOUDFLARE.md TAHAP 2). Ikuti panduannya berurutan dari
+# awal, jangan upload file ini duluan sebelum sampai ke langkah itu.
+# ============================================================
+
+name = "siekstrasapa"
+compatibility_date = "2026-07-27"
+main = "worker.js"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"                      # nama ini HARUS "DB" -- dipakai persis di worker.js (env.DB)
+database_name = "survei-ekskul-db"  # ganti sesuai nama database D1 yang Anda buat
+database_id = "GANTI-DENGAN-DATABASE-ID-ANDA"
