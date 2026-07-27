@@ -2308,5 +2308,33 @@
             }
         };
 
+        // --- HEADER MOBILE AUTO HIDE/SHOW SAAT SCROLL ---
+        // Header mobile (class "lg:hidden fixed top-0...") disembunyikan otomatis saat
+        // user scroll ke bawah, dan dimunculkan lagi saat scroll ke atas.
+        // PENTING: area yang benar-benar discroll BUKAN window, tapi elemen
+        // #main-content-container (.page-container, overflow-y:auto) -- lihat style.css.
+        (function setupAutoHideMobileHeader() {
+            const header = document.querySelector('header.lg\\:hidden');
+            const scrollEl = document.getElementById('main-content-container');
+            if (!header || !scrollEl) return;
+
+            header.classList.add('transition-transform', 'duration-300', 'will-change-transform');
+
+            let lastScroll = 0;
+            scrollEl.addEventListener('scroll', () => {
+                const current = scrollEl.scrollTop;
+                const headerHeight = header.offsetHeight || 64;
+
+                if (current > lastScroll && current > headerHeight) {
+                    // scroll ke bawah & sudah lewat tinggi header -> sembunyikan
+                    header.classList.add('-translate-y-full');
+                } else {
+                    // scroll ke atas (atau masih di area paling atas) -> tampilkan
+                    header.classList.remove('-translate-y-full');
+                }
+                lastScroll = current <= 0 ? 0 : current;
+            }, { passive: true });
+        })();
+
         // --- STARTUP ---
         system.init();
