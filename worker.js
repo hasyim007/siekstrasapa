@@ -15,9 +15,14 @@
  *   - Kalau path-nya TIDAK cocok dengan file statis manapun (contoh:
  *     /api/data), barulah kode fetch() di bawah ini yang dijalankan.
  *
- * Jadi Worker ini HANYA perlu menangani /api/data -- selebihnya (semua
- * file .html, .css, .js) otomatis dilayani sebagai aset statis tanpa
- * perlu ditulis kode apa pun di sini.
+ * Jadi Worker ini HANYA perlu menangani /api/data dan /api/ai-kpi --
+ * selebihnya (semua file .html, .css, .js) otomatis dilayani sebagai aset
+ * statis tanpa perlu ditulis kode apa pun di sini.
+ *
+ * /api/ai-kpi dipakai oleh fitur "KPI & Kesimpulan Berbasis AI" di
+ * Dashboard, jalan lewat Cloudflare Workers AI (binding "AI") -- BUKAN lagi
+ * Google Gemini. Tidak perlu API key apa pun dari admin karena Workers AI
+ * berjalan langsung di dalam Worker ini.
  *
  * Database yang dipakai adalah Cloudflare D1 (SQLite), diakses lewat
  * "binding" bernama DB. Binding ini WAJIB disambungkan dulu dari
@@ -117,6 +122,52 @@ async function handlePost(request, env) {
   }
 }
 
+// Model teks Workers AI yang dipakai untuk fitur "KPI & Kesimpulan Berbasis
+// AI" di Dashboard. Llama 3.3 70B cukup pintar untuk analisis singkat
+// berbahasa Indonesia dan termasuk dalam paket gratis Workers AI (dengan
+// limit harian neuron -- lihat PANDUAN-DEPLOY-CLOUDFLARE.md).
+const AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+
+async function handleAiKpi(request, env) {
+  if (!env.AI) {
+    return jsonResponse({
+      success: false,
+      error: 'Workers AI belum terhubung ke Worker ini (binding "AI" tidak ditemukan). ' +
+             'Tambahkan blok [ai] dengan binding = "AI" di wrangler.toml lalu deploy ulang. ' +
+             'Detail lengkap ada di PANDUAN-DEPLOY-CLOUDFLARE.md.'
+    }, 500);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (err) {
+    return jsonResponse({ success: false, error: 'Body request bukan JSON yang valid.' }, 400);
+  }
+
+  const ringkasan = body && body.ringkasan;
+  if (!ringkasan || typeof ringkasan !== 'object') {
+    return jsonResponse({ success: false, error: 'Ringkasan data tidak ditemukan pada request.' }, 400);
+  }
+
+  const prompt = `Kamu adalah asisten analis data untuk admin sekolah dasar (SD). Berikut ringkasan data peminatan ekstrakurikuler siswa dalam format JSON:\n\n${JSON.stringify(ringkasan)}\n\nBuat analisis singkat dalam Bahasa Indonesia untuk admin sekolah, terdiri dari:\n1. 3-5 poin KPI (Key Performance Indicator) paling penting dari data ini.\n2. Kesimpulan singkat (2-3 kalimat).\n3. 2-3 saran tindak lanjut yang actionable untuk sekolah.\n\nGunakan format singkat dengan sub-judul jelas, tanpa markdown tebal/asterisk berlebihan, langsung to the point.`;
+
+  try {
+    const result = await env.AI.run(AI_MODEL, {
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const text = (result && result.response || '').trim();
+    if (!text) {
+      return jsonResponse({ success: false, error: 'AI tidak mengembalikan hasil. Coba lagi beberapa saat lagi.' }, 502);
+    }
+
+    return jsonResponse({ success: true, text });
+  } catch (err) {
+    return jsonResponse({ success: false, error: 'Gagal menghubungi Workers AI: ' + err.message }, 500);
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -124,6 +175,12 @@ export default {
     if (url.pathname === '/api/data') {
       if (request.method === 'GET') return handleGet(env);
       if (request.method === 'POST') return handlePost(request, env);
+      if (request.method === 'OPTIONS') return new Response(null, { status: 204 });
+      return jsonResponse({ success: false, error: 'Method tidak didukung' }, 405);
+    }
+
+    if (url.pathname === '/api/ai-kpi') {
+      if (request.method === 'POST') return handleAiKpi(request, env);
       if (request.method === 'OPTIONS') return new Response(null, { status: 204 });
       return jsonResponse({ success: false, error: 'Method tidak didukung' }, 405);
     }

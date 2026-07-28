@@ -20,3 +20,11 @@ not_found_handling = "404-page"
 binding = "DB"                      # nama ini HARUS "DB" -- dipakai persis di worker.js (env.DB)
 database_name = "siekstrasapa2"  # ganti sesuai nama database D1 yang Anda buat
 database_id = "fefab046-395c-40c0-85d9-12424e0fc124"
+
+# Binding Cloudflare Workers AI -- dipakai untuk fitur "KPI & Kesimpulan
+# Berbasis AI" di Dashboard (menggantikan Google Gemini). TIDAK perlu API key
+# apa pun -- begitu binding ini ada, fitur AI langsung jalan. Tidak perlu
+# langkah tambahan di Dashboard Cloudflare, binding ini otomatis aktif begitu
+# di-deploy (beda dengan D1 yang harus disambung manual).
+[ai]
+binding = "AI"

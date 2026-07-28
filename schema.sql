@@ -1,12 +1,128 @@
 -- ============================================================
 -- SKEMA DATABASE D1 - Survei Ekskul SDN 01 Papahan
 -- ============================================================
--- File ini WAJIB dijalankan SATU KALI terhadap database D1 Anda
--- sebelum situs bisa menyimpan data. Cara menjalankannya ada di
--- PANDUAN-DEPLOY-CLOUDFLARE.md bagian D (lewat Dashboard, tanpa
--- perlu instal apa pun) atau lewat perintah:
 --
---   wrangler d1 execute NAMA_DATABASE_ANDA --remote --file=./schema.sql
+-- ‼️ PENTING - CARA MENJALANKAN FILE INI (WAJIB DIBACA) ‼️
+--
+-- File ini WAJIB dijalankan SATU KALI SECARA UTUH (dari baris
+-- paling atas sampai paling bawah, JANGAN dipotong / JANGAN cuma
+-- copy 1 baris saja), sebelum situs bisa menyimpan data.
+--
+-- Kalau Anda cuma jalankan sebagian (misalnya cuma baris INSERT
+-- paling bawah tanpa CREATE TABLE di atasnya), Anda akan kena
+-- error seperti ini:
+--
+--     Error: no such table: store: SQLITE_ERROR
+--
+-- Itu artinya tabel "store" belum pernah dibuat -- solusinya
+-- jalankan ulang SELURUH isi file ini dari awal, bukan cuma
+-- 1 baris.
+--
+-- ------------------------------------------------------------
+-- CARA 1 -- Lewat Dashboard Cloudflare (paling gampang, tanpa
+-- install apa pun)
+-- ------------------------------------------------------------
+--   1. Buka dashboard.cloudflare.com -> pilih akun Anda
+--   2. Menu kiri: Storage & Databases -> D1 SQL Database
+--   3. Klik nama database Anda (yang sesuai dengan database_name
+--      di wrangler.toml)
+--   4. Buka tab "Console" (atau "Query")
+--   5. Kosongkan/hapus dulu kotak query yang ada
+--   6. Copy-paste SELURUH isi file schema.sql ini (dari baris
+--      paling atas sampai baris INSERT 'saran' paling bawah)
+--      ke kotak query tersebut
+--   7. Klik tombol "Execute" / "Run query"
+--   8. Kalau sukses, biasanya muncul info "X queries executed"
+--      tanpa pesan error merah
+--
+-- ------------------------------------------------------------
+-- CARA 2 -- Lewat terminal, pakai Wrangler CLI
+-- ------------------------------------------------------------
+--   Jalankan perintah ini dari folder project (folder yang ada
+--   file wrangler.toml-nya), ganti NAMA_DATABASE_ANDA sesuai
+--   dengan database_name di wrangler.toml:
+--
+--     wrangler d1 execute NAMA_DATABASE_ANDA --remote --file=./schema.sql
+--
+--   Perintah ini otomatis membaca & menjalankan SELURUH file
+--   secara berurutan, jadi tidak akan kena masalah "tabel belum
+--   ada" seperti kalau dijalankan manual per-baris.
+--
+--   Kalau Anda test dulu di database lokal (bukan yang sudah live
+--   di internet), buang flag --remote:
+--
+--     wrangler d1 execute NAMA_DATABASE_ANDA --file=./schema.sql
+--
+-- ------------------------------------------------------------
+-- CARA 3 -- Kalau mau jalankan manual / bertahap (harus urut!)
+-- ------------------------------------------------------------
+--   Kalau karena suatu alasan Anda ingin jalankan per-bagian,
+--   urutannya WAJIB seperti ini -- tidak boleh dibalik:
+--
+--   Langkah A: jalankan dulu bagian CREATE TABLE (bagian ini
+--   membuat tabelnya, harus paling pertama):
+--
+--     CREATE TABLE IF NOT EXISTS store (
+--       type       TEXT PRIMARY KEY,
+--       data       TEXT NOT NULL DEFAULT '[]',
+--       updated_at TEXT
+--     );
+--
+--   Langkah B: BARU SETELAH itu, jalankan baris-baris INSERT
+--   (ada di bagian paling bawah file ini) satu per satu atau
+--   sekaligus.
+--
+-- ------------------------------------------------------------
+-- CATATAN LAIN
+-- ------------------------------------------------------------
+--   - File ini AMAN dijalankan ulang berkali-kali. Baik
+--     "CREATE TABLE IF NOT EXISTS" maupun "INSERT OR IGNORE"
+--     tidak akan menimpa/menghapus data yang sudah ada -- kalau
+--     tabel/baris sudah ada, perintahnya otomatis dilewati saja.
+--   - File ini TIDAK perlu dijalankan ulang setiap kali ada
+--     perubahan tampilan/fitur di frontend (assets/app.js,
+--     file .html). Karena semua data disimpan sebagai teks JSON
+--     dalam 1 kolom "data", perubahan struktur field di dalam
+--     JSON itu (misalnya menambah field baru) TIDAK butuh
+--     migrasi database sama sekali.
+--   - File ini hanya perlu dijalankan ulang kalau: (a) baru
+--     pertama kali setup database, atau (b) database-nya sengaja
+--     dihapus/dibuat ulang dari awal.
+--
+-- ------------------------------------------------------------
+-- CARA CEK DATABASE YANG SUDAH TERBUAT (VERIFIKASI)
+-- ------------------------------------------------------------
+--   Setelah menjalankan file ini, Anda bisa memastikan tabel dan
+--   datanya benar-benar sudah terbuat dengan salah satu cara ini:
+--
+--   >> Lewat Dashboard Cloudflare (tab Console/Query, sama tempat
+--      Anda menjalankan file ini tadi):
+--
+--      -- 1. Cek tabel apa saja yang ada (harus muncul "store"):
+--      SELECT name FROM sqlite_master WHERE type='table';
+--
+--      -- 2. Cek semua isi tabel store:
+--      SELECT type, data, updated_at FROM store;
+--
+--      -- 3. Cek jumlah baris (harus 9 -- sesuai 9 jenis data di
+--      --    bawah: kelas, ekskul, survey, siswa, gallery, usulan,
+--      --    settings, notif, saran):
+--      SELECT COUNT(*) FROM store;
+--
+--      -- 4. Cek khusus data Kritik & Saran yang masuk dari wali murid:
+--      SELECT data FROM store WHERE type = 'saran';
+--
+--   >> Lewat terminal (Wrangler CLI) -- WAJIB pakai flag --remote
+--      kalau mau cek database yang sudah LIVE di internet (dipakai
+--      situs asli). Kalau flag --remote dihilangkan, yang dicek
+--      malah database lokal di komputer Anda (biasanya kosong):
+--
+--      wrangler d1 execute NAMA_DATABASE_ANDA --remote --command="SELECT name FROM sqlite_master WHERE type='table';"
+--      wrangler d1 execute NAMA_DATABASE_ANDA --remote --command="SELECT * FROM store;"
+--      wrangler d1 execute NAMA_DATABASE_ANDA --remote --command="SELECT COUNT(*) FROM store;"
+--
+--   Kalau hasilnya menunjukkan tabel "store" ada dan datanya sesuai
+--   (9 baris), berarti database sudah siap dipakai oleh situs.
 --
 -- ------------------------------------------------------------
 -- Kenapa cuma 1 tabel "store", bukan 7 tabel terpisah seperti
@@ -23,7 +139,7 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS store (
-  type       TEXT PRIMARY KEY,   -- 'kelas' | 'ekskul' | 'survey' | 'siswa' | 'gallery' | 'usulan' | 'settings'
+  type       TEXT PRIMARY KEY,   -- 'kelas' | 'ekskul' | 'survey' | 'siswa' | 'gallery' | 'usulan' | 'settings' | 'notif' | 'saran'
   data       TEXT NOT NULL DEFAULT '[]',  -- JSON string dari array data jenis ini
   updated_at TEXT                 -- kapan terakhir disimpan (ISO 8601), buat referensi/debug saja
 );

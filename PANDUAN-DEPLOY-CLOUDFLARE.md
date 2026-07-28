@@ -373,6 +373,13 @@ atas. Lanjut ke TAHAP 7 — tahap terakhir!
    SELECT data FROM store WHERE type = 'kelas';
    ```
    Harus muncul teks JSON yang berisi kelas `1A` yang baru Anda tambahkan.
+8. Buka menu **Dashboard** (analitik) di situs → klik tombol **"Buat
+   Analisis AI"**. Setelah beberapa detik harus muncul teks analisis KPI.
+   Fitur ini pakai **Cloudflare Workers AI** (binding `AI` di
+   `wrangler.toml`) — tidak perlu API Key apa pun, otomatis aktif begitu
+   Worker ini di-deploy. Kalau muncul pesan error soal binding `AI` tidak
+   ditemukan, cek lagi bagian `[ai]` di `wrangler.toml` (lihat TAHAP 4.3),
+   lalu commit ulang supaya Cloudflare deploy ulang.
 
 ✅ **CEK FINAL**: Semua langkah TAHAP 7 di atas berhasil tanpa error.
 **Selamat, situs Anda sudah 100% berfungsi.**
