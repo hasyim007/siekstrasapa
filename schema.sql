@@ -104,9 +104,9 @@
 --      -- 2. Cek semua isi tabel store:
 --      SELECT type, data, updated_at FROM store;
 --
---      -- 3. Cek jumlah baris (harus 9 -- sesuai 9 jenis data di
+--      -- 3. Cek jumlah baris (harus 10 -- sesuai 10 jenis data di
 --      --    bawah: kelas, ekskul, survey, siswa, gallery, usulan,
---      --    settings, notif, saran):
+--      --    settings, notif, saran, arsip):
 --      SELECT COUNT(*) FROM store;
 --
 --      -- 4. Cek khusus data Kritik & Saran yang masuk dari wali murid:
@@ -122,7 +122,7 @@
 --      wrangler d1 execute NAMA_DATABASE_ANDA --remote --command="SELECT COUNT(*) FROM store;"
 --
 --   Kalau hasilnya menunjukkan tabel "store" ada dan datanya sesuai
---   (9 baris), berarti database sudah siap dipakai oleh situs.
+--   (10 baris), berarti database sudah siap dipakai oleh situs.
 --
 -- ------------------------------------------------------------
 -- Kenapa cuma 1 tabel "store", bukan 7 tabel terpisah seperti
@@ -139,7 +139,7 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS store (
-  type       TEXT PRIMARY KEY,   -- 'kelas' | 'ekskul' | 'survey' | 'siswa' | 'gallery' | 'usulan' | 'settings' | 'notif' | 'saran'
+  type       TEXT PRIMARY KEY,   -- 'kelas' | 'ekskul' | 'survey' | 'siswa' | 'gallery' | 'usulan' | 'settings' | 'notif' | 'saran' | 'arsip'
   data       TEXT NOT NULL DEFAULT '[]',  -- JSON string dari array data jenis ini
   updated_at TEXT                 -- kapan terakhir disimpan (ISO 8601), buat referensi/debug saja
 );
@@ -157,3 +157,4 @@ INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('usulan',   '[]', d
 INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('settings', '[]', datetime('now'));
 INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('notif',    '[]', datetime('now'));
 INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('saran',    '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('arsip',    '[]', datetime('now'));

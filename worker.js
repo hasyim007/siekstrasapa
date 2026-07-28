@@ -40,7 +40,7 @@
  * ============================================================
  */
 
-const ALLOWED_TYPES = ['kelas', 'ekskul', 'survey', 'siswa', 'gallery', 'usulan', 'settings', 'notif', 'saran'];
+const ALLOWED_TYPES = ['kelas', 'ekskul', 'survey', 'siswa', 'gallery', 'usulan', 'settings', 'notif', 'saran', 'arsip'];
 
 function jsonResponse(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
