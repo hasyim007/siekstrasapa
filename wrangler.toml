@@ -7,7 +7,7 @@
 # awal, jangan upload file ini duluan sebelum sampai ke langkah itu.
 # ============================================================
 
-name = "GANTI-DENGAN-NAMA-WORKER-ANDA"
+name = "siekstrasapa"
 compatibility_date = "2026-07-27"
 main = "worker.js"
 
@@ -18,8 +18,8 @@ not_found_handling = "404-page"
 
 [[d1_databases]]
 binding = "DB"                      # nama ini HARUS "DB" -- dipakai persis di worker.js (env.DB)
-database_name = "survei-ekskul-db"  # ganti sesuai nama database D1 yang Anda buat
-database_id = "GANTI-DENGAN-DATABASE-ID-ANDA"
+database_name = "siekstrasapa2"  # ganti sesuai nama database D1 yang Anda buat
+database_id = "a8751176-b2ed-4632-ba0b-11e45d724d21"
 
 # Binding Cloudflare Workers AI -- dipakai untuk fitur "KPI & Kesimpulan
 # Berbasis AI" di Dashboard (menggantikan Google Gemini). TIDAK perlu API key
