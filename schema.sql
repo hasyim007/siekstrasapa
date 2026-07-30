@@ -1,0 +1,235 @@
+-- ============================================================
+-- SKEMA DATABASE D1 - Survei Ekskul SDN 01 Papahan
+-- ============================================================
+--
+-- ‼️ PENTING - CARA MENJALANKAN FILE INI (WAJIB DIBACA) ‼️
+--
+-- File ini WAJIB dijalankan SATU KALI SECARA UTUH (dari baris
+-- paling atas sampai paling bawah, JANGAN dipotong / JANGAN cuma
+-- copy 1 baris saja), sebelum situs bisa menyimpan data.
+--
+-- Kalau Anda cuma jalankan sebagian (misalnya cuma baris INSERT
+-- paling bawah tanpa CREATE TABLE di atasnya), Anda akan kena
+-- error seperti ini:
+--
+--     Error: no such table: store: SQLITE_ERROR
+--
+-- Itu artinya tabel "store" belum pernah dibuat -- solusinya
+-- jalankan ulang SELURUH isi file ini dari awal, bukan cuma
+-- 1 baris.
+--
+-- ------------------------------------------------------------
+-- CARA 1 -- Lewat Dashboard Cloudflare (paling gampang, tanpa
+-- install apa pun)
+-- ------------------------------------------------------------
+--   1. Buka dashboard.cloudflare.com -> pilih akun Anda
+--   2. Menu kiri: Storage & Databases -> D1 SQL Database
+--   3. Klik nama database Anda (yang sesuai dengan database_name
+--      di wrangler.toml)
+--   4. Buka tab "Console" (atau "Query")
+--   5. Kosongkan/hapus dulu kotak query yang ada
+--   6. Copy-paste SELURUH isi file schema.sql ini (dari baris
+--      paling atas sampai baris INSERT 'saran' paling bawah)
+--      ke kotak query tersebut
+--   7. Klik tombol "Execute" / "Run query"
+--   8. Kalau sukses, biasanya muncul info "X queries executed"
+--      tanpa pesan error merah
+--
+-- ------------------------------------------------------------
+-- CARA 2 -- Lewat terminal, pakai Wrangler CLI
+-- ------------------------------------------------------------
+--   Jalankan perintah ini dari folder project (folder yang ada
+--   file wrangler.toml-nya), ganti NAMA_DATABASE_ANDA sesuai
+--   dengan database_name di wrangler.toml:
+--
+--     wrangler d1 execute NAMA_DATABASE_ANDA --remote --file=./schema.sql
+--
+--   Perintah ini otomatis membaca & menjalankan SELURUH file
+--   secara berurutan, jadi tidak akan kena masalah "tabel belum
+--   ada" seperti kalau dijalankan manual per-baris.
+--
+--   Kalau Anda test dulu di database lokal (bukan yang sudah live
+--   di internet), buang flag --remote:
+--
+--     wrangler d1 execute NAMA_DATABASE_ANDA --file=./schema.sql
+--
+-- ------------------------------------------------------------
+-- CARA 3 -- Kalau mau jalankan manual / bertahap (harus urut!)
+-- ------------------------------------------------------------
+--   Kalau karena suatu alasan Anda ingin jalankan per-bagian,
+--   urutannya WAJIB seperti ini -- tidak boleh dibalik:
+--
+--   Langkah A: jalankan dulu bagian CREATE TABLE (bagian ini
+--   membuat tabelnya, harus paling pertama):
+--
+--     CREATE TABLE IF NOT EXISTS store (
+--       type       TEXT PRIMARY KEY,
+--       data       TEXT NOT NULL DEFAULT '[]',
+--       updated_at TEXT
+--     );
+--
+--   Langkah B: BARU SETELAH itu, jalankan baris-baris INSERT
+--   (ada di bagian paling bawah file ini) satu per satu atau
+--   sekaligus.
+--
+-- ------------------------------------------------------------
+-- CATATAN LAIN
+-- ------------------------------------------------------------
+--   - File ini AMAN dijalankan ulang berkali-kali. Baik
+--     "CREATE TABLE IF NOT EXISTS" maupun "INSERT OR IGNORE"
+--     tidak akan menimpa/menghapus data yang sudah ada -- kalau
+--     tabel/baris sudah ada, perintahnya otomatis dilewati saja.
+--   - File ini TIDAK perlu dijalankan ulang setiap kali ada
+--     perubahan tampilan/fitur di frontend (assets/app.js,
+--     file .html). Karena semua data disimpan sebagai teks JSON
+--     dalam 1 kolom "data", perubahan struktur field di dalam
+--     JSON itu (misalnya menambah field baru) TIDAK butuh
+--     migrasi database sama sekali.
+--   - File ini hanya perlu dijalankan ulang kalau: (a) baru
+--     pertama kali setup database, atau (b) database-nya sengaja
+--     dihapus/dibuat ulang dari awal.
+--
+-- ------------------------------------------------------------
+-- CARA CEK DATABASE YANG SUDAH TERBUAT (VERIFIKASI)
+-- ------------------------------------------------------------
+--   Setelah menjalankan file ini, Anda bisa memastikan tabel dan
+--   datanya benar-benar sudah terbuat dengan salah satu cara ini:
+--
+--   >> Lewat Dashboard Cloudflare (tab Console/Query, sama tempat
+--      Anda menjalankan file ini tadi):
+--
+--      -- 1. Cek tabel apa saja yang ada (harus muncul "store"):
+--      SELECT name FROM sqlite_master WHERE type='table';
+--
+--      -- 2. Cek semua isi tabel store:
+--      SELECT type, data, updated_at FROM store;
+--
+--      -- 3. Cek jumlah baris (harus 10 -- sesuai 10 jenis data di
+--      --    bawah: kelas, ekskul, survey, siswa, gallery, usulan,
+--      --    settings, notif, saran, arsip):
+--      SELECT COUNT(*) FROM store;
+--
+--      -- 4. Cek khusus data Kritik & Saran yang masuk dari wali murid:
+--      SELECT data FROM store WHERE type = 'saran';
+--
+--   >> Lewat terminal (Wrangler CLI) -- WAJIB pakai flag --remote
+--      kalau mau cek database yang sudah LIVE di internet (dipakai
+--      situs asli). Kalau flag --remote dihilangkan, yang dicek
+--      malah database lokal di komputer Anda (biasanya kosong):
+--
+--      wrangler d1 execute NAMA_DATABASE_ANDA --remote --command="SELECT name FROM sqlite_master WHERE type='table';"
+--      wrangler d1 execute NAMA_DATABASE_ANDA --remote --command="SELECT * FROM store;"
+--      wrangler d1 execute NAMA_DATABASE_ANDA --remote --command="SELECT COUNT(*) FROM store;"
+--
+--   Kalau hasilnya menunjukkan tabel "store" ada dan datanya sesuai
+--   (10 baris), berarti database sudah siap dipakai oleh situs.
+--
+-- ------------------------------------------------------------
+-- REFERENSI CEPAT -- PERINTAH D1 LAIN YANG SERING DIBUTUHKAN
+-- ------------------------------------------------------------
+--   Semua perintah di bawah ini bisa dijalankan lewat 2 tempat yang sama
+--   seperti di atas: (a) tab Console/Query di Dashboard Cloudflare, atau
+--   (b) terminal pakai:
+--     wrangler d1 execute NAMA_DATABASE_ANDA --remote --command="...ISI PERINTAHNYA..."
+--   (ingat, flag --remote WAJIB ada supaya yang kena adalah database yang
+--   LIVE di internet, bukan database lokal di komputer Anda)
+--
+--   >> MENAMBAH TABEL BARU
+--      Situs ini didesain sengaja cuma pakai 1 tabel "store" (lihat
+--      penjelasan di bagian paling bawah file ini), jadi normalnya Anda
+--      TIDAK PERLU bikin tabel baru. Tapi kalau suatu saat memang perlu
+--      tabel terpisah (misalnya untuk fitur baru yang polanya beda),
+--      contoh perintahnya:
+--
+--      CREATE TABLE IF NOT EXISTS nama_tabel_baru (
+--        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+--        kolom_a    TEXT,
+--        kolom_b    TEXT,
+--        created_at TEXT
+--      );
+--
+--      Jalankan lewat Console D1 atau via terminal:
+--      wrangler d1 execute NAMA_DATABASE_ANDA --remote --file=./nama_file_sql_baru.sql
+--
+--   >> MENGECEK TABEL
+--      -- Lihat semua nama tabel yang ada di database:
+--      SELECT name FROM sqlite_master WHERE type='table';
+--
+--      -- Lihat struktur/daftar kolom dari 1 tabel tertentu (ganti
+--      -- "store" dengan nama tabel yang mau dicek):
+--      PRAGMA table_info(store);
+--
+--      -- Lihat perintah CREATE TABLE persis seperti saat tabel dibuat
+--      -- (berguna untuk lihat tipe data & constraint tiap kolom):
+--      SELECT sql FROM sqlite_master WHERE type='table' AND name='store';
+--
+--      -- Hitung jumlah baris di 1 tabel:
+--      SELECT COUNT(*) FROM store;
+--
+--   >> MENAMBAH / MENGUBAH KOLOM DI TABEL YANG SUDAH ADA
+--      SQLite (dasar dari D1) tidak bisa hapus kolom langsung, tapi bisa
+--      tambah kolom baru:
+--      ALTER TABLE store ADD COLUMN kolom_baru TEXT;
+--
+--   >> MENGHAPUS DATA
+--      -- Kosongkan 1 jenis data tertentu jadi array kosong lagi (AMAN,
+--      -- tabelnya tetap ada, cuma isinya dikosongkan -- ganti 'kelas'
+--      -- sesuai jenis data yang mau dikosongkan):
+--      UPDATE store SET data = '[]' WHERE type = 'kelas';
+--
+--      -- Hapus 1 baris jenis data tertentu SELURUHNYA dari tabel
+--      -- (jarang dipakai, biasanya UPDATE di atas sudah cukup):
+--      DELETE FROM store WHERE type = 'kelas';
+--
+--      -- Hapus SATU tabel beserta seluruh isinya (‼️ TIDAK BISA
+--      -- DIBATALKAN, hati-hati -- jangan jalankan kecuali yakin):
+--      DROP TABLE IF EXISTS nama_tabel_yang_mau_dihapus;
+--
+--   >> BACKUP / LIHAT SEMUA ISI DATABASE SEKALIGUS
+--      -- Lewat terminal, unduh seluruh isi database jadi file .sql:
+--      wrangler d1 export NAMA_DATABASE_ANDA --remote --output=backup.sql
+--
+--   >> DAFTAR SEMUA DATABASE D1 DI AKUN ANDA (lewat terminal)
+--      wrangler d1 list
+--
+--   >> INFO UKURAN / JUMLAH BARIS DATABASE (lewat terminal)
+--      wrangler d1 info NAMA_DATABASE_ANDA
+--
+-- ------------------------------------------------------------
+-- Kenapa cuma 1 tabel "store", bukan 7 tabel terpisah seperti
+-- sheet Kelas/Ekskul/Survey/dst di versi Google Spreadsheet dulu?
+--
+-- Karena pola simpan di frontend (assets/app.js) selalu mengirim
+-- SELURUH array data sekaligus tiap kali ada perubahan (bukan
+-- simpan 1 baris/1 siswa/1 responden satu-satu). Jadi 1 baris di
+-- tabel ini = 1 jenis data (kelas / ekskul / survey / siswa /
+-- gallery / usulan / settings), isinya adalah teks JSON dari
+-- SELURUH isi array itu. Ini paling sederhana, paling murah
+-- (baca 1 baris per jenis data), dan paling mirip dengan cara
+-- kerja Code.gs yang lama (writeSheet() = timpa semua isi sheet).
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS store (
+  type       TEXT PRIMARY KEY,   -- 'kelas' | 'ekskul' | 'survey' | 'siswa' | 'gallery' | 'usulan' | 'settings' | 'notif' | 'saran' | 'arsip' | 'guru'
+  data       TEXT NOT NULL DEFAULT '[]',  -- JSON string dari array data jenis ini
+  updated_at TEXT                 -- kapan terakhir disimpan (ISO 8601), buat referensi/debug saja
+);
+
+-- Baris awal (array kosong) untuk tiap jenis data, supaya tabel langsung
+-- siap dipakai sejak pertama kali situs dibuka (tidak wajib -- endpoint
+-- /api/data juga sudah aman kalau baris ini belum ada -- tapi lebih rapi
+-- kalau langsung ada semua).
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('kelas',    '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('ekskul',   '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('survey',   '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('siswa',    '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('gallery',  '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('usulan',   '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('settings', '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('notif',    '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('saran',    '[]', datetime('now'));
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('arsip',    '[]', datetime('now'));
+-- 'guru' = Master Data Guru/Pelatih (fitur Foto & Biografi Guru/Pelatih): 1 guru
+-- diinput sekali di sini, lalu dipilih (dropdown, bukan teks bebas lagi) di form
+-- pembimbing ekskul manapun dia membina -- lihat catatan di worker.js & app.js.
+INSERT OR IGNORE INTO store (type, data, updated_at) VALUES ('guru',     '[]', datetime('now'));
