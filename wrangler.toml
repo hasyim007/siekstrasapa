@@ -1,0 +1,30 @@
+# ============================================================
+# wrangler.toml - konfigurasi Worker
+# ============================================================
+# ⚠️ JANGAN LANGSUNG DI-UPLOAD! Baris "name" di bawah ini WAJIB diisi dulu
+# sesuai nama Worker yang Anda buat di dashboard Cloudflare (lihat
+# PANDUAN-DEPLOY-CLOUDFLARE.md TAHAP 2). Ikuti panduannya berurutan dari
+# awal, jangan upload file ini duluan sebelum sampai ke langkah itu.
+# ============================================================
+
+name = "siekstrasapa"
+compatibility_date = "2026-07-27"
+main = "worker.js"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"                      # nama ini HARUS "DB" -- dipakai persis di worker.js (env.DB)
+database_name = "siekstrasapa2"     # ganti sesuai nama database D1 yang Anda buat
+database_id = "ffa1fd35-2491-4c80-a157-a4c52ef03660"
+
+# Binding Cloudflare Workers AI -- dipakai untuk fitur "KPI & Kesimpulan
+# Berbasis AI" di Dashboard (menggantikan Google Gemini). TIDAK perlu API key
+# apa pun -- begitu binding ini ada, fitur AI langsung jalan. Tidak perlu
+# langkah tambahan di Dashboard Cloudflare, binding ini otomatis aktif begitu
+# di-deploy (beda dengan D1 yang harus disambung manual).
+[ai]
+binding = "AI"
