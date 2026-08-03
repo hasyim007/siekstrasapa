@@ -1,9 +1,0 @@
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-
-/*.html
-  Cache-Control: no-cache, must-revalidate
-
-/
-  Cache-Control: no-cache, must-revalidate
